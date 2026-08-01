@@ -188,6 +188,45 @@ const VERT_ACT = {
   },
 };
 
+// Per-vertical CHANNEL split — ct_digital.mtm_chotot_vertical_channel (the same table and the
+// same aggregation the Executive Summary's channel card uses, but filtered to vertical
+// 'pty'/'jobs'/'veh'/'gds' instead of 'Chotot'). SUM(dau)/SUM(dau_w_lead)/SUM(lead_count)
+// across platform per (date, channel); raw channels digital/seo/direct/others map 1:1 and
+// growth_inapp + growth_outapp both fold into "Growth"; then AVG (dau/dwl) or SUM (lead) over
+// the month. Every vertical x channel x month has a full set of daily rows for T1–T7/26.
+// LIMITATION: this table has no MAU columns, so MAU / MAU w/ Lead / DAU-MAU do NOT exist at
+// channel grain — the channel view exposes only DAU / DAU w/ Lead / Total Lead.
+const VERT_CHANNEL = {
+  PTY:{
+    Direct: {"2026-01":{dau:37403,dwl:5131,lead:627980},"2026-02":{dau:29384,dwl:3810,lead:396432},"2026-03":{dau:48647,dwl:7175,lead:883162},"2026-04":{dau:45968,dwl:6126,lead:764932},"2026-05":{dau:46382,dwl:5938,lead:799251},"2026-06":{dau:43279,dwl:5339,lead:620346},"2026-07":{dau:44784,dwl:4661,lead:511295}},
+    SEO:    {"2026-01":{dau:12550,dwl:1453,lead:196794},"2026-02":{dau:10530,dwl:1067,lead:119072},"2026-03":{dau:16894,dwl:2150,lead:256637},"2026-04":{dau:14227,dwl:1789,lead:212077},"2026-05":{dau:13950,dwl:1756,lead:205097},"2026-06":{dau:15159,dwl:1751,lead:209395},"2026-07":{dau:16541,dwl:1919,lead:221078}},
+    Digital:{"2026-01":{dau:10708,dwl:1114,lead:120712},"2026-02":{dau:8525,dwl:829,lead:80286},"2026-03":{dau:17832,dwl:1967,lead:204340},"2026-04":{dau:17131,dwl:1685,lead:166583},"2026-05":{dau:16469,dwl:1731,lead:169656},"2026-06":{dau:17119,dwl:1692,lead:166741},"2026-07":{dau:20181,dwl:1755,lead:178185}},
+    Growth: {"2026-01":{dau:3308,dwl:525,lead:56964},"2026-02":{dau:1621,dwl:242,lead:22590},"2026-03":{dau:2724,dwl:521,lead:60432},"2026-04":{dau:2667,dwl:475,lead:49140},"2026-05":{dau:3535,dwl:534,lead:56477},"2026-06":{dau:3093,dwl:434,lead:46412},"2026-07":{dau:3898,dwl:558,lead:60753}},
+    Others: {"2026-01":{dau:3020,dwl:596,lead:74211},"2026-02":{dau:2968,dwl:575,lead:57455},"2026-03":{dau:6330,dwl:1418,lead:162622},"2026-04":{dau:4812,dwl:1161,lead:126366},"2026-05":{dau:5802,dwl:1183,lead:131922},"2026-06":{dau:4978,dwl:1222,lead:132735},"2026-07":{dau:5328,dwl:3109,lead:215085}},
+  },
+  JOB:{
+    Direct: {"2026-01":{dau:16410,dwl:2795,lead:309560},"2026-02":{dau:16014,dwl:2624,lead:241421},"2026-03":{dau:23735,dwl:4785,lead:520869},"2026-04":{dau:21430,dwl:4406,lead:449648},"2026-05":{dau:20691,dwl:4369,lead:470730},"2026-06":{dau:21244,dwl:4844,lead:538496},"2026-07":{dau:20335,dwl:4655,lead:576800}},
+    SEO:    {"2026-01":{dau:6550,dwl:1167,lead:106623},"2026-02":{dau:6803,dwl:1174,lead:94486},"2026-03":{dau:10630,dwl:1982,lead:176432},"2026-04":{dau:8744,dwl:1548,lead:132010},"2026-05":{dau:8753,dwl:1555,lead:135205},"2026-06":{dau:8445,dwl:1521,lead:132163},"2026-07":{dau:8405,dwl:1502,lead:139450}},
+    Digital:{"2026-01":{dau:6165,dwl:1016,lead:96516},"2026-02":{dau:6105,dwl:880,lead:71989},"2026-03":{dau:16899,dwl:2212,lead:204969},"2026-04":{dau:13084,dwl:1692,lead:149762},"2026-05":{dau:12128,dwl:1729,lead:159622},"2026-06":{dau:11354,dwl:1817,lead:171753},"2026-07":{dau:10739,dwl:1721,lead:178779}},
+    Growth: {"2026-01":{dau:3700,dwl:838,lead:98396},"2026-02":{dau:1884,dwl:401,lead:39998},"2026-03":{dau:3439,dwl:786,lead:88366},"2026-04":{dau:1740,dwl:400,lead:45484},"2026-05":{dau:1219,dwl:274,lead:31050},"2026-06":{dau:1271,dwl:272,lead:33098},"2026-07":{dau:1290,dwl:265,lead:35598}},
+    Others: {"2026-01":{dau:1083,dwl:241,lead:26098},"2026-02":{dau:2628,dwl:422,lead:42595},"2026-03":{dau:7308,dwl:1336,lead:150275},"2026-04":{dau:3143,dwl:713,lead:71476},"2026-05":{dau:4001,dwl:1085,lead:117053},"2026-06":{dau:2699,dwl:939,lead:101108},"2026-07":{dau:2591,dwl:981,lead:104824}},
+  },
+  VEH:{
+    Direct: {"2026-01":{dau:81692,dwl:4982,lead:427861},"2026-02":{dau:57189,dwl:4176,lead:305679},"2026-03":{dau:75976,dwl:5697,lead:689794},"2026-04":{dau:51520,dwl:4868,lead:771743},"2026-05":{dau:48067,dwl:4413,lead:587537},"2026-06":{dau:47226,dwl:4276,lead:424002},"2026-07":{dau:50136,dwl:4428,lead:358585}},
+    SEO:    {"2026-01":{dau:24491,dwl:1195,lead:97827},"2026-02":{dau:22574,dwl:1204,lead:94274},"2026-03":{dau:27444,dwl:1584,lead:149923},"2026-04":{dau:30211,dwl:1586,lead:133274},"2026-05":{dau:28614,dwl:1599,lead:143907},"2026-06":{dau:26913,dwl:1544,lead:127854},"2026-07":{dau:27786,dwl:1591,lead:125750}},
+    Digital:{"2026-01":{dau:1770,dwl:164,lead:18297},"2026-02":{dau:4014,dwl:276,lead:23885},"2026-03":{dau:13283,dwl:940,lead:180236},"2026-04":{dau:16868,dwl:1023,lead:289010},"2026-05":{dau:15745,dwl:964,lead:299267},"2026-06":{dau:13878,dwl:879,lead:99602},"2026-07":{dau:17052,dwl:1058,lead:87766}},
+    Growth: {"2026-01":{dau:8305,dwl:1247,lead:117531},"2026-02":{dau:4063,dwl:550,lead:45634},"2026-03":{dau:4619,dwl:687,lead:102220},"2026-04":{dau:3872,dwl:570,lead:110489},"2026-05":{dau:3664,dwl:523,lead:80365},"2026-06":{dau:2420,dwl:357,lead:33767},"2026-07":{dau:1879,dwl:272,lead:23503}},
+    Others: {"2026-01":{dau:2468,dwl:374,lead:35495},"2026-02":{dau:3812,dwl:542,lead:46062},"2026-03":{dau:5318,dwl:830,lead:139099},"2026-04":{dau:4038,dwl:710,lead:176796},"2026-05":{dau:3871,dwl:652,lead:117397},"2026-06":{dau:3589,dwl:651,lead:70897},"2026-07":{dau:3533,dwl:776,lead:65125}},
+  },
+  GDS:{
+    Direct: {"2026-01":{dau:108427,dwl:15177,lead:1116574},"2026-02":{dau:96594,dwl:13787,lead:926668},"2026-03":{dau:109668,dwl:16550,lead:1245381},"2026-04":{dau:105088,dwl:16725,lead:1208718},"2026-05":{dau:102151,dwl:15765,lead:1181183},"2026-06":{dau:121759,dwl:15633,lead:1164273},"2026-07":{dau:106215,dwl:16129,lead:1247917}},
+    SEO:    {"2026-01":{dau:33852,dwl:2722,lead:212754},"2026-02":{dau:31782,dwl:3057,lead:232118},"2026-03":{dau:37665,dwl:3592,lead:299117},"2026-04":{dau:35088,dwl:3258,lead:262333},"2026-05":{dau:34258,dwl:3214,lead:270854},"2026-06":{dau:34921,dwl:3230,lead:265210},"2026-07":{dau:36863,dwl:3336,lead:278670}},
+    Digital:{"2026-01":{dau:4334,dwl:650,lead:56731},"2026-02":{dau:4078,dwl:596,lead:46065},"2026-03":{dau:9676,dwl:1190,lead:99190},"2026-04":{dau:10568,dwl:1178,lead:93086},"2026-05":{dau:11511,dwl:1130,lead:95598},"2026-06":{dau:14170,dwl:1134,lead:93819},"2026-07":{dau:19651,dwl:1468,lead:121875}},
+    Growth: {"2026-01":{dau:17440,dwl:3453,lead:268460},"2026-02":{dau:8723,dwl:1665,lead:115123},"2026-03":{dau:9629,dwl:1977,lead:154948},"2026-04":{dau:8358,dwl:1772,lead:136329},"2026-05":{dau:8144,dwl:1698,lead:133843},"2026-06":{dau:5393,dwl:1098,lead:83924},"2026-07":{dau:4132,dwl:796,lead:63109}},
+    Others: {"2026-01":{dau:6373,dwl:1273,lead:108667},"2026-02":{dau:10159,dwl:2117,lead:162504},"2026-03":{dau:12887,dwl:2809,lead:238961},"2026-04":{dau:10132,dwl:2613,lead:203111},"2026-05":{dau:9808,dwl:2557,lead:203406},"2026-06":{dau:8667,dwl:2532,lead:199561},"2026-07":{dau:8018,dwl:3104,lead:238777}},
+  },
+};
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const fmtN = n => n==null?"—": (typeof n==="number"?n.toLocaleString("en-US"):"—");
 const pct  = (a,b) => b ? Math.round(a/b*100) : null;
@@ -476,13 +515,28 @@ const VERT_METRICS = [
 // ─── BREAKDOWN BY VERTICAL — same metrics as Executive Summary, split PTY/JOB/VEH/GDS ─────────
 function VerticalSection() {
   const [met, setMet] = useState("dau");
+  const [view, setView] = useState("total");
   const metObj = VERT_METRICS.find(m=>m.key===met);
+  const CH_OK = ["dau","dwl","lead"];
 
   const getVal = (v,m) => {
     const d = VERT_ACT[v]?.[m];
     if (!d) return null;
     if (met==="dauMau") return d.mau ? parseFloat((d.dau/d.mau*100).toFixed(1)) : null;
     return d[met] ?? null;
+  };
+  const getChVal = (v,c,m) => {
+    const d = VERT_CHANNEL[v]?.[c]?.[m]?.[met] ?? null;
+    return d && d>0 ? d : null;
+  };
+  const summary = vals => {
+    const nz = vals.filter(x=>x!=null&&x>0).length||1;
+    const numeric = vals.filter(x=>x!=null);
+    return numeric.length
+      ? (metObj.isRatio
+          ? parseFloat((numeric.reduce((a,x)=>a+x,0)/numeric.length).toFixed(1))
+          : (met==="lead" ? numeric.reduce((a,x)=>a+x,0) : Math.round(numeric.reduce((a,x)=>a+x,0)/nz)))
+      : null;
   };
 
   return (
@@ -491,21 +545,41 @@ function VerticalSection() {
       <div style={{...card,overflowX:"auto"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:2}}>
           <div style={{fontWeight:700,fontSize:13,color:"#374151"}}>📈 {metObj.label} by Vertical</div>
-          <div style={{display:"flex",gap:4,background:"#f3f4f6",borderRadius:8,padding:3,flexWrap:"wrap"}}>
-            {VERT_METRICS.map(m=>(
-              <button key={m.key} onClick={()=>setMet(m.key)} style={{
+          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:4,background:"#f3f4f6",borderRadius:8,padding:3,flexWrap:"wrap"}}>
+              <button onClick={()=>setView("total")} style={{
                 padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",
                 fontSize:12,fontWeight:600,transition:"all .15s",
-                background:met===m.key?m.color:"transparent",
-                color:met===m.key?"#fff":"#6b7280",
-              }}>{m.label}</button>
-            ))}
+                background:view==="total"?"#6b7280":"transparent",
+                color:view==="total"?"#fff":"#6b7280",
+              }}>Total</button>
+              <button onClick={()=>{setView("channel"); if(!CH_OK.includes(met)) setMet("dau");}} style={{
+                padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",
+                fontSize:12,fontWeight:600,transition:"all .15s",
+                background:view==="channel"?"#6b7280":"transparent",
+                color:view==="channel"?"#fff":"#6b7280",
+              }}>By channel</button>
+            </div>
+            <div style={{display:"flex",gap:4,background:"#f3f4f6",borderRadius:8,padding:3,flexWrap:"wrap"}}>
+              {VERT_METRICS.map(m=>{
+                const disabled = view==="channel" && !CH_OK.includes(m.key);
+                return (
+                  <button key={m.key} disabled={disabled} title={disabled?"Not available at channel grain — mtm_chotot_vertical_channel has no MAU columns":""} onClick={()=>setMet(m.key)} style={{
+                    padding:"5px 12px",borderRadius:6,border:"none",cursor:disabled?"not-allowed":"pointer",
+                    fontSize:12,fontWeight:600,transition:"all .15s",opacity:disabled ? .4 : 1,
+                    background:met===m.key?m.color:"transparent",
+                    color:met===m.key?"#fff":"#6b7280",
+                  }}>{m.label}</button>
+                );
+              })}
+            </div>
           </div>
         </div>
         <div style={{fontSize:11,color:"#9ca3af",marginBottom:8}}>
           Source: chotot_mtm dashboard__dau_vertical_daily/monthly, dashboard__dauwlead__vertical_daily/monthly,
           dashboard__mauwlead__vertical_monthly — same authoritative per-vertical actuals as the production
           dashboard's By Vertical tab (unchanged this round). DAU/MAU is derived (DAU ÷ MAU) per vertical per month.
+          {view==="channel" && <span>{" "}Channel split: ct_digital.mtm_chotot_vertical_channel (vertical=pty/jobs/veh/gds), summed across platform, growth_inapp+growth_outapp folded into Growth. MAU / MAU w/ Lead / DAU-MAU are not available at channel grain and are disabled in this view. The channel rows come from a different table than the vertical total row, so they do not tie out exactly: DAU and DAU w/ Lead channel sums run ~1–5% above the vertical total (channels overlap — one user active via 2+ channels counts in each — plus the source difference), and Total Lead differs by roughly −7%…+5%. Exception to flag: VEH T4/26 and T5/26 Total Lead sums to 1.48M / 1.23M here versus 766K / 719K in the vertical total row — the same unreconciled Apr/May lead discrepancy already noted for the platform actuals; not yet resolved with the table owners.</span>}
         </div>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
           <thead>
@@ -518,19 +592,26 @@ function VerticalSection() {
           <tbody>
             {VERTS.map(v=>{
               const vals = MONTHS.map(m=>getVal(v,m));
-              const nz = vals.filter(x=>x!=null&&x>0).length||1;
-              const numeric = vals.filter(x=>x!=null);
-              const smr = numeric.length
-                ? (metObj.isRatio
-                    ? parseFloat((numeric.reduce((a,x)=>a+x,0)/numeric.length).toFixed(1))
-                    : (met==="lead" ? numeric.reduce((a,x)=>a+x,0) : Math.round(numeric.reduce((a,x)=>a+x,0)/nz)))
-                : null;
+              const smr = summary(vals);
               return (
-                <tr key={v} style={{borderTop:"1px solid #f0f0f0"}}>
-                  <td style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:VERT_COLOR[v],textAlign:"left",whiteSpace:"nowrap"}}>{VERT_LABEL[v]}</td>
-                  {vals.map((val,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:val!=null?"#111":"#ddd"}}>{val!=null?metObj.fmt(val):"—"}</td>)}
-                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#374151",borderLeft:"1px solid #f0f0f0"}}>{smr!=null?metObj.fmt(smr):"—"}</td>
-                </tr>
+                <React.Fragment key={v}>
+                  <tr style={{borderTop:"1px solid #f0f0f0"}}>
+                    <td style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:VERT_COLOR[v],textAlign:"left",whiteSpace:"nowrap"}}>{VERT_LABEL[v]}</td>
+                    {vals.map((val,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:val!=null?"#111":"#ddd"}}>{val!=null?metObj.fmt(val):"—"}</td>)}
+                    <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#374151",borderLeft:"1px solid #f0f0f0"}}>{smr!=null?metObj.fmt(smr):"—"}</td>
+                  </tr>
+                  {view==="channel" && CHANNELS.map(c=>{
+                    const chVals = MONTHS.map(m=>getChVal(v,c,m));
+                    const chSmr = summary(chVals);
+                    return (
+                      <tr key={c} style={{borderTop:"1px solid #fafafa"}}>
+                        <td style={{padding:"5px 8px",paddingLeft:24,fontSize:11,fontWeight:500,color:"#6b7280",textAlign:"left",whiteSpace:"nowrap"}}>{c}</td>
+                        {chVals.map((val,i)=><td key={i} style={{padding:"5px 8px",fontSize:11,textAlign:"right",color:val!=null&&val>0?"#6b7280":"#ddd"}}>{val!=null&&val>0?metObj.fmt(val):"—"}</td>)}
+                        <td style={{padding:"5px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:chSmr!=null?"#6b7280":"#ddd",borderLeft:"1px solid #f0f0f0"}}>{chSmr!=null?metObj.fmt(chSmr):"—"}</td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
               );
             })}
           </tbody>
