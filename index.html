@@ -128,6 +128,20 @@ const UT_CHOTOT = {
   "2026-07":{dau:{nv:131798,rv:361621}, dwl:{nv:6406,rv:45733}},
 };
 
+// DAU/DWL/Lead by channel — ct_digital.mtm_chotot_vertical_channel, vertical="Chotot",
+// SUM(dau)/SUM(dau_w_lead)/SUM(lead_count) across platform per (date, channel), raw channel
+// values (digital/seo/direct/growth_inapp/growth_outapp/others) mapped to
+// Digital/SEO/Direct/Growth(both growth_inapp+growth_outapp)/Others, then AVG (dau/dwl) or
+// SUM (lead) over the month. Fresh as of 2026-07-31 (not the stale daumaulead_mkt_rp source).
+const CHANNELS = ["Direct","SEO","Digital","Growth","Others"];
+const CHANNEL_DATA = {
+  Direct:  {"2026-01":{dau:300197,dwl:27611,lead:2489694},"2026-02":{dau:242522,dwl:23978,lead:1876422},"2026-03":{dau:314157,dwl:33607,lead:3349380},"2026-04":{dau:280711,dwl:31547,lead:3204791},"2026-05":{dau:270610,dwl:29973,lead:3151039},"2026-06":{dau:285508,dwl:29609,lead:2755221},"2026-07":{dau:270278,dwl:29359,lead:2706749}},
+  SEO:     {"2026-01":{dau:84080, dwl:6503, lead:616060 },"2026-02":{dau:77869, dwl:6467, lead:541819 },"2026-03":{dau:101894,dwl:9251, lead:884640 },"2026-04":{dau:96490, dwl:8140, lead:741852 },"2026-05":{dau:94060, dwl:8089, lead:785149 },"2026-06":{dau:94264, dwl:8018, lead:737575 },"2026-07":{dau:98091, dwl:8339, lead:769660 }},
+  Digital: {"2026-01":{dau:23914, dwl:2914, lead:292584 },"2026-02":{dau:23680, dwl:2556, lead:222563 },"2026-03":{dau:60167, dwl:6236, lead:689511 },"2026-04":{dau:62482, dwl:5505, lead:699008 },"2026-05":{dau:59700, dwl:5491, lead:755871 },"2026-06":{dau:60245, dwl:5464, lead:532585 },"2026-07":{dau:73614, dwl:5947, lead:569940 }},
+  Growth:  {"2026-01":{dau:31659, dwl:5894, lead:542578 },"2026-02":{dau:16902, dwl:2786, lead:223843 },"2026-03":{dau:20738, dwl:3866, lead:406571 },"2026-04":{dau:16842, dwl:3126, lead:341851 },"2026-05":{dau:16795, dwl:2954, lead:308692 },"2026-06":{dau:12972, dwl:2108, lead:197614 },"2026-07":{dau:12017, dwl:1844, lead:183776 }},
+  Others:  {"2026-01":{dau:14634, dwl:2437, lead:245010 },"2026-02":{dau:21351, dwl:3566, lead:309258 },"2026-03":{dau:32854, dwl:6230, lead:691859 },"2026-04":{dau:57391, dwl:5084, lead:578659 },"2026-05":{dau:65340, dwl:5364, lead:589066 },"2026-06":{dau:78981, dwl:5240, lead:505967 },"2026-07":{dau:98055, dwl:7873, lead:626308 }},
+};
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const fmtN = n => n==null?"—": (typeof n==="number"?n.toLocaleString("en-US"):"—");
 const pct  = (a,b) => b ? Math.round(a/b*100) : null;
@@ -254,35 +268,6 @@ function ExecSummary() {
         </table>
       </div>
 
-      {/* Actual of total platform */}
-      <div style={{...card,overflowX:"auto",marginTop:16}}>
-        <div style={{fontWeight:700,fontSize:13,color:"#374151",marginBottom:10}}>🏠 Actual of total platform</div>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-          <thead>
-            <tr style={{background:"#f8f9ff"}}>
-              <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",textAlign:"left",minWidth:110}}>Metric</th>
-              {MONTHS.map(m=><th key={m} style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",whiteSpace:"nowrap"}}>{ML[m]}</th>)}
-              <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",color:"#6b7280"}}>Avg/Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {METRICS.map(met=>{
-              const isLead=met.key==="lead";
-              const vals=MONTHS.map(m=>getActVal(m,met.key));
-              const nz=vals.filter(v=>v>0).length||1;
-              const smr=isLead?vals.reduce((a,x)=>a+x,0):Math.round(vals.reduce((a,x)=>a+x,0)/nz);
-              return (
-                <tr key={met.key} style={{borderTop:"1px solid #f0f0f0"}}>
-                  <td style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:met.color,textAlign:"left"}}>{met.label}</td>
-                  {vals.map((v,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:v?"#111":"#ddd"}}>{v?fmtN(v):"—"}</td>)}
-                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#374151",borderLeft:"1px solid #f0f0f0"}}>{smr?fmtN(smr):"—"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
       {/* Actual by User Type — DAU/DWL only (new source has no new/return split for Lead/MAU) */}
       <div style={{...card,overflowX:"auto",marginTop:16}}>
         <div style={{fontWeight:700,fontSize:13,color:"#374151",marginBottom:2}}>👥 Actual by User Type (New vs Returning)</div>
@@ -304,12 +289,29 @@ function ExecSummary() {
               const nzF=vs=>vs.filter(x=>x>0).length||1;
               const smrN=isLead?nvVals.reduce((a,x)=>a+x,0):Math.round(nvVals.reduce((a,x)=>a+x,0)/nzF(nvVals));
               const smrR=isLead?rvVals.reduce((a,x)=>a+x,0):Math.round(rvVals.reduce((a,x)=>a+x,0)/nzF(rvVals));
+              const totVals=nvVals.map((v,i)=>v+rvVals[i]);
+              const contribVals=nvVals.map((v,i)=>{
+                const t=totVals[i]; return t?Math.round(v/t*100):null;
+              });
+              const smrTot=smrN+smrR;
+              const smrContrib=smrTot?Math.round(smrN/smrTot*100):null;
               return [
                 <tr key={met.key+'-n'} style={{borderTop:"1px solid #f0f0f0"}}>
-                  <td rowSpan={2} style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:met.color,textAlign:"left",verticalAlign:"middle"}}>{met.label}</td>
+                  <td rowSpan={3} style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:met.color,textAlign:"left",verticalAlign:"middle"}}>{met.label}</td>
                   <td style={{padding:"5px 8px",fontSize:12,color:"#6366f1",fontWeight:500}}>New</td>
                   {nvVals.map((v,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:v?"#6366f1":"#ddd"}}>{v?fmtN(v):"—"}</td>)}
                   <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#6366f1",borderLeft:"1px solid #f0f0f0"}}>{fmtN(smrN)}</td>
+                </tr>,
+                <tr key={met.key+'-c'} style={{background:"#fafafa"}}>
+                  <td style={{padding:"5px 8px",fontSize:11,color:"#9ca3af",fontWeight:500,fontStyle:"italic"}}>Contribution</td>
+                  {contribVals.map((p,i)=>(
+                    <td key={i} style={{padding:"5px 8px",fontSize:11,textAlign:"right",color:"#9ca3af"}}>
+                      {p==null?"—":<span>{p}% <span style={{color:"#d1d5db"}}>/</span> {100-p}%</span>}
+                    </td>
+                  ))}
+                  <td style={{padding:"5px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:"#9ca3af",borderLeft:"1px solid #f0f0f0"}}>
+                    {smrContrib==null?"—":`${smrContrib}% / ${100-smrContrib}%`}
+                  </td>
                 </tr>,
                 <tr key={met.key+'-r'}>
                   <td style={{padding:"5px 8px",fontSize:12,color:"#059669",fontWeight:500}}>Returning</td>
@@ -322,7 +324,66 @@ function ExecSummary() {
         </table>
       </div>
 
+      {/* DAU / DWL / Lead by Channel */}
+      <ChannelSection/>
+
     </section>
+  );
+}
+
+function ChannelSection() {
+  const [ch, setCh] = useState("dau");
+  const CH_METRICS = [
+    {key:"dau", label:"DAU", color:"#6366f1"},
+    {key:"dwl", label:"DAU w/ Lead", color:"#f59e0b"},
+    {key:"lead",label:"Total Lead",  color:"#10b981"},
+  ];
+  const metObj = CH_METRICS.find(m=>m.key===ch);
+  return (
+    <div style={{...card,overflowX:"auto",marginTop:16}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:2}}>
+        <div style={{fontWeight:700,fontSize:13,color:"#374151"}}>📡 {metObj.label} by Channel</div>
+        <div style={{display:"flex",gap:4,background:"#f3f4f6",borderRadius:8,padding:3}}>
+          {CH_METRICS.map(m=>(
+            <button key={m.key} onClick={()=>setCh(m.key)} style={{
+              padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",
+              fontSize:12,fontWeight:600,transition:"all .15s",
+              background:ch===m.key?m.color:"transparent",
+              color:ch===m.key?"#fff":"#6b7280",
+            }}>{m.label}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{fontSize:11,color:"#9ca3af",marginBottom:8}}>
+        Source: ct_digital.mtm_chotot_vertical_channel, vertical=&quot;Chotot&quot;, summed across
+        platform. Channels can overlap (a user active via 2+ channels the same day counts in each),
+        so the sum across channels runs above the platform total by design.
+      </div>
+      <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+        <thead>
+          <tr style={{background:"#f8f9ff"}}>
+            <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",textAlign:"left",minWidth:90}}>Channel</th>
+            {MONTHS.map(m=><th key={m} style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",whiteSpace:"nowrap"}}>{ML[m]}</th>)}
+            <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",color:"#6b7280"}}>Avg/Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {CHANNELS.map(c=>{
+            const isLead = ch==="lead";
+            const vals = MONTHS.map(m=>CHANNEL_DATA[c]?.[m]?.[ch]??0);
+            const nz = vals.filter(v=>v>0).length||1;
+            const smr = isLead ? vals.reduce((a,x)=>a+x,0) : Math.round(vals.reduce((a,x)=>a+x,0)/nz);
+            return (
+              <tr key={c} style={{borderTop:"1px solid #f0f0f0"}}>
+                <td style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:metObj.color,textAlign:"left"}}>{c}</td>
+                {vals.map((v,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:v?"#111":"#ddd"}}>{v?fmtN(v):"—"}</td>)}
+                <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#374151",borderLeft:"1px solid #f0f0f0"}}>{smr?fmtN(smr):"—"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
