@@ -46,11 +46,32 @@ git push
 
 ## Data sources (BQ)
 
+Production dashboard (`main` branch, this table):
+
 | Metric | Table |
 |---|---|
 | DAU (vertical + platform) | `chotot_mtm.dashboard__dau_vertical_daily` |
 | MAU | `chotot_mtm.dashboard__dau_vertical_monthly` |
 | DwL / Lead / MauLead | `chotot_mtm.dashboard__dauwlead__vertical_monthly` |
-| S&D coverage | `ct_product_analytics.servings__marketplace_supply_demand_tracking_v2` |
-| KPI targets | Google Sheets `1D-2eQcfDMzy42wHUF4bpwCY4cWtrJNvp-kdv9R_iFUI`, tab "MTM metric" |
+| Detail Table (vertical x channel, daily) | `ct_product_analytics.daumaulead_mkt_rp` (⚠️ ~9 days stale as of 2026-08-01) |
+| Campaign Breakdown (vertical x channel x campaign) | `ct_digital.mtm_chotot_vertical_channel_campaign_dau_mau` |
+| S&D coverage | `ct_product_analytics.servings__marketplace_supply_demand_tracking_v2` (dead code — `MarketplaceHealth()` is written but never invoked) |
+| KPI targets (FC0/FC1) | Google Sheets `1D-2eQcfDMzy42wHUF4bpwCY4cWtrJNvp-kdv9R_iFUI`, tab "MTM metric" |
 | Growth cost | Same sheet, tab "FC & Actual cost" |
+
+`exec-summary-mtm-source` branch (Executive Summary preview only, not yet merged to `main`):
+
+| Metric | Table |
+|---|---|
+| DAU / DAU w/ Lead / Total Lead (platform total) | `ct_digital.mtm_chotot_vertical_dau_mau` (`vertical='Chotot'`) — ⚠️ pending reconciliation, Apr/May Total Lead runs ~17-18% above the `main`-branch number |
+| DAU/DWL/Lead by channel | `ct_digital.mtm_chotot_vertical_channel` |
+| FC0/FC1/FC2 forecast selector | Google Sheet `1VkmHBo_1RtzCyo24yhoJbYmZqrgjSl9KGY3w9XWDUqQ` ("2026 MKT Plan & Budget"), tab "FC2-Demand" |
+| MAU / MAU w/ Lead / DAU-MAU | still hardcoded from the `main`-branch numbers — not yet re-sourced |
+
+New, not yet wired into either branch:
+
+| Table | What it has | Notes |
+|---|---|---|
+| `ct_digital.kiet_digital_campaign_daily` | Daily, ad-platform (Google/Meta) x campaign x account: `impressions`, `clicks`, `spend_vnd`, plus pixel-attributed `dau`/`dau_w_lead`/`lead_daily` | Only source with funnel + spend at campaign grain — complements, doesn't replace, `mtm_chotot_vertical_channel_campaign_dau_mau` (which has vertical/channel attribution but no spend/impressions/clicks) |
+
+See `references/ct-demand-marketing-dashboard.md` in the `chotot-digital` repo for the full join logic, staleness/retirement review, and open reconciliation items.
