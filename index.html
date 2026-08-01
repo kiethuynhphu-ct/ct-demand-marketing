@@ -142,12 +142,62 @@ const CHANNEL_DATA = {
   Others:  {"2026-01":{dau:14634, dwl:2437, lead:245010 },"2026-02":{dau:21351, dwl:3566, lead:309258 },"2026-03":{dau:32854, dwl:6230, lead:691859 },"2026-04":{dau:57391, dwl:5084, lead:578659 },"2026-05":{dau:65340, dwl:5364, lead:589066 },"2026-06":{dau:78981, dwl:5240, lead:505967 },"2026-07":{dau:98055, dwl:7873, lead:626308 }},
 };
 
+// Per-vertical actuals — same authoritative chotot_mtm tables as production's VERT_ACT
+// (dashboard__dau_vertical_daily/monthly, dashboard__dauwlead__vertical_daily/monthly,
+// dashboard__mauwlead__vertical_monthly), copied over unchanged for the new "Breakdown by
+// Vertical" tab. dauMau is derived on read (dau/mau), not stored, same as production.
+const VERTS = ["PTY","JOB","VEH","GDS"];
+const VERT_LABEL = {PTY:"Nhà đất (PTY)", JOB:"Việc làm (JOB)", VEH:"Xe cộ (VEH)", GDS:"Đồ dùng (GDS)"};
+const VERT_COLOR = {PTY:"#0ea5e9", JOB:"#f97316", VEH:"#a855f7", GDS:"#22c55e"};
+const VERT_ACT = {
+  PTY:{
+    "2026-01":{dau:65530,dwl:8657,lead:1123564,mau:1069022,mauLead:153546},
+    "2026-02":{dau:51891,dwl:6355,lead:685554,mau:828572,mauLead:113986},
+    "2026-03":{dau:90032,dwl:12842,lead:1585808,mau:1483675,mauLead:225193},
+    "2026-04":{dau:82776,dwl:10731,lead:1251398,mau:1347596,mauLead:178248},
+    "2026-05":{dau:83965,dwl:10749,lead:1310424,mau:1440429,mauLead:186795},
+    "2026-06":{dau:81636,dwl:10114,lead:1184802,mau:1398901,mauLead:175540},
+    "2026-07":{dau:88742,dwl:11595,lead:1202793,mau:1645547,mauLead:228248},
+  },
+  JOB:{
+    "2026-01":{dau:33065,dwl:5905,lead:647339,mau:513192,mauLead:95501},
+    "2026-02":{dau:32642,dwl:5333,lead:494817,mau:512045,mauLead:87919},
+    "2026-03":{dau:60329,dwl:10731,lead:1151840,mau:968833,mauLead:172371},
+    "2026-04":{dau:47009,dwl:8448,lead:835156,mau:721012,mauLead:130914},
+    "2026-05":{dau:45551,dwl:8705,lead:901132,mau:691607,mauLead:136321},
+    "2026-06":{dau:43852,dwl:9038,lead:983147,mau:644625,mauLead:138627},
+    "2026-07":{dau:42330,dwl:8811,lead:1039824,mau:645042,mauLead:138519},
+  },
+  VEH:{
+    "2026-01":{dau:117316,dwl:8301,lead:752526,mau:2014777,mauLead:128135},
+    "2026-02":{dau:90244,dwl:6663,lead:520778,mau:1258771,mauLead:105548},
+    "2026-03":{dau:124311,dwl:9592,lead:1272050,mau:1965956,mauLead:152763},
+    "2026-04":{dau:104666,dwl:8562,lead:766108,mau:1488175,mauLead:131726},
+    "2026-05":{dau:98055,dwl:7988,lead:719097,mau:1434016,mauLead:129054},
+    "2026-06":{dau:92461,dwl:7593,lead:761553,mau:1329234,mauLead:120096},
+    "2026-07":{dau:98832,dwl:7993,lead:665769,mau:1516253,mauLead:131784},
+  },
+  GDS:{
+    "2026-01":{dau:167681,dwl:23570,lead:1863098,mau:1976446,mauLead:291961},
+    "2026-02":{dau:148969,dwl:21019,lead:1521171,mau:1637244,mauLead:261839},
+    "2026-03":{dau:176466,dwl:25851,lead:2098911,mau:2094334,mauLead:327917},
+    "2026-04":{dau:166535,dwl:25197,lead:1905897,mau:1834010,mauLead:310566},
+    "2026-05":{dau:163019,dwl:24041,lead:1883213,mau:1893232,mauLead:310689},
+    "2026-06":{dau:182598,dwl:23339,lead:1840489,mau:2455584,mauLead:302379},
+    "2026-07":{dau:172852,dwl:24454,lead:1976231,mau:2165463,mauLead:330256},
+  },
+};
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const fmtN = n => n==null?"—": (typeof n==="number"?n.toLocaleString("en-US"):"—");
 const pct  = (a,b) => b ? Math.round(a/b*100) : null;
 const card = {background:"#fff",borderRadius:12,padding:"20px 22px",boxShadow:"0 1px 4px rgba(0,0,0,.07)"};
 const TH   = {padding:"8px 12px",textAlign:"right",fontSize:12,fontWeight:600,color:"#6b7280",borderBottom:"2px solid #e5e7eb"};
 const TD   = {padding:"7px 12px",textAlign:"right",fontSize:12,color:"#111"};
+// Frozen first ("Metric") column for wide, horizontally-scrolled tables — needs its own
+// opaque background + z-index so scrolled columns don't show through underneath it.
+const STICKY_TH = {...TH, textAlign:"left", position:"sticky", left:0, zIndex:3, background:"#f8f9ff", boxShadow:"2px 0 4px rgba(0,0,0,.06)"};
+const STICKY_TD = {...TD, textAlign:"left", position:"sticky", left:0, zIndex:1, background:"#fff", boxShadow:"2px 0 4px rgba(0,0,0,.06)"};
 
 // ─── EXECUTIVE SUMMARY (only section in this preview) ─────────────────────────
 function ExecSummary() {
@@ -204,7 +254,7 @@ function ExecSummary() {
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
           <thead>
             <tr style={{background:"#f8f9ff"}}>
-              <th style={TH}>Metric</th>
+              <th style={STICKY_TH}>Metric</th>
               {MONTHS.map(m=>(
                 <th key={m} colSpan={3} style={{...TH,textAlign:"center",
                   borderLeft:"2px solid #e5e7eb",color:KPI_SEL[m]?"#6366f1":"#d1d5db"}}>
@@ -213,7 +263,7 @@ function ExecSummary() {
               ))}
             </tr>
             <tr style={{background:"#f8f9ff",fontSize:11}}>
-              <th style={TH}/>
+              <th style={STICKY_TH}/>
               {MONTHS.map(m=>(
                 <React.Fragment key={m}>
                   <th style={{...TH,borderLeft:"2px solid #e5e7eb",color:"#374151"}}>Actual</th>
@@ -226,7 +276,7 @@ function ExecSummary() {
           <tbody>
             {DEMAND_METRICS.map(met=>(
               <tr key={met.key} style={{borderTop:"1px solid #f0f0f0"}}>
-                <td style={{...TD,fontWeight:600,color:met.color,whiteSpace:"nowrap"}}>{met.label}</td>
+                <td style={{...STICKY_TD,fontWeight:600,color:met.color,whiteSpace:"nowrap"}}>{met.label}</td>
                 {MONTHS.map(m=>{
                   const act=ACT[m][met.key], k=KPI_SEL[m]?.[met.key];
                   const hasK = k!=null;
@@ -248,7 +298,7 @@ function ExecSummary() {
               {label:"DAU/MAU", color:"#14b8a6",getAct:m=>ACT[m].dauMau, getTgt:m=>KPI_MAU_SEL[m]?.dauMau, fmt:n=>n+"%", isRatio:true},
             ].map(({label,color,getAct,getTgt,fmt,isRatio})=>(
               <tr key={label} style={{borderTop:"1px solid #f0f0f0"}}>
-                <td style={{...TD,fontWeight:600,color,whiteSpace:"nowrap"}}>{label}</td>
+                <td style={{...STICKY_TD,fontWeight:600,color,whiteSpace:"nowrap"}}>{label}</td>
                 {MONTHS.map(m=>{
                   const act=getAct(m), k=getTgt(m);
                   const hasK = k!=null;
@@ -289,6 +339,44 @@ function ExecSummary() {
               const nzF=vs=>vs.filter(x=>x>0).length||1;
               const smrN=isLead?nvVals.reduce((a,x)=>a+x,0):Math.round(nvVals.reduce((a,x)=>a+x,0)/nzF(nvVals));
               const smrR=isLead?rvVals.reduce((a,x)=>a+x,0):Math.round(rvVals.reduce((a,x)=>a+x,0)/nzF(rvVals));
+              return [
+                <tr key={met.key+'-n'} style={{borderTop:"1px solid #f0f0f0"}}>
+                  <td rowSpan={2} style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:met.color,textAlign:"left",verticalAlign:"middle"}}>{met.label}</td>
+                  <td style={{padding:"5px 8px",fontSize:12,color:"#6366f1",fontWeight:500}}>New</td>
+                  {nvVals.map((v,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:v?"#6366f1":"#ddd"}}>{v?fmtN(v):"—"}</td>)}
+                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#6366f1",borderLeft:"1px solid #f0f0f0"}}>{fmtN(smrN)}</td>
+                </tr>,
+                <tr key={met.key+'-r'}>
+                  <td style={{padding:"5px 8px",fontSize:12,color:"#059669",fontWeight:500}}>Returning</td>
+                  {rvVals.map((v,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:v?"#059669":"#ddd"}}>{v?fmtN(v):"—"}</td>)}
+                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#059669",borderLeft:"1px solid #f0f0f0"}}>{fmtN(smrR)}</td>
+                </tr>
+              ];
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{...card,overflowX:"auto",marginTop:16}}>
+        <div style={{fontWeight:700,fontSize:13,color:"#374151",marginBottom:2}}>📊 Contribution — New vs Returning (% of Total)</div>
+        <div style={{fontSize:11,color:"#9ca3af",marginBottom:8}}>Share of each metric's total coming from new vs returning users each month.</div>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead>
+            <tr style={{background:"#f8f9ff"}}>
+              <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",textAlign:"left",minWidth:110}}>Metric</th>
+              <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",minWidth:80}}>User Type</th>
+              {MONTHS.map(m=><th key={m} style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",whiteSpace:"nowrap"}}>{ML[m]}</th>)}
+              <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",color:"#6b7280"}}>Avg/Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {UT_METRICS.map(met=>{
+              const isLead=met.key==="lead";
+              const nvVals=MONTHS.map(m=>getPlatUT(m,met.key).nv);
+              const rvVals=MONTHS.map(m=>getPlatUT(m,met.key).rv);
+              const nzF=vs=>vs.filter(x=>x>0).length||1;
+              const smrN=isLead?nvVals.reduce((a,x)=>a+x,0):Math.round(nvVals.reduce((a,x)=>a+x,0)/nzF(nvVals));
+              const smrR=isLead?rvVals.reduce((a,x)=>a+x,0):Math.round(rvVals.reduce((a,x)=>a+x,0)/nzF(rvVals));
               const totVals=nvVals.map((v,i)=>v+rvVals[i]);
               const contribVals=nvVals.map((v,i)=>{
                 const t=totVals[i]; return t?Math.round(v/t*100):null;
@@ -296,27 +384,16 @@ function ExecSummary() {
               const smrTot=smrN+smrR;
               const smrContrib=smrTot?Math.round(smrN/smrTot*100):null;
               return [
-                <tr key={met.key+'-n'} style={{borderTop:"1px solid #f0f0f0"}}>
-                  <td rowSpan={3} style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:met.color,textAlign:"left",verticalAlign:"middle"}}>{met.label}</td>
-                  <td style={{padding:"5px 8px",fontSize:12,color:"#6366f1",fontWeight:500}}>New</td>
-                  {nvVals.map((v,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:v?"#6366f1":"#ddd"}}>{v?fmtN(v):"—"}</td>)}
-                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#6366f1",borderLeft:"1px solid #f0f0f0"}}>{fmtN(smrN)}</td>
+                <tr key={met.key+'-cn'} style={{borderTop:"1px solid #f0f0f0"}}>
+                  <td rowSpan={2} style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:met.color,textAlign:"left",verticalAlign:"middle"}}>{met.label}</td>
+                  <td style={{padding:"5px 8px",fontSize:12,color:"#6366f1",fontWeight:500}}>New %</td>
+                  {contribVals.map((p,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:p==null?"#ddd":"#6366f1"}}>{p==null?"—":p+"%"}</td>)}
+                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:smrContrib==null?"#ddd":"#6366f1",borderLeft:"1px solid #f0f0f0"}}>{smrContrib==null?"—":smrContrib+"%"}</td>
                 </tr>,
-                <tr key={met.key+'-c'} style={{background:"#fafafa"}}>
-                  <td style={{padding:"5px 8px",fontSize:11,color:"#9ca3af",fontWeight:500,fontStyle:"italic"}}>Contribution</td>
-                  {contribVals.map((p,i)=>(
-                    <td key={i} style={{padding:"5px 8px",fontSize:11,textAlign:"right",color:"#9ca3af"}}>
-                      {p==null?"—":<span>{p}% <span style={{color:"#d1d5db"}}>/</span> {100-p}%</span>}
-                    </td>
-                  ))}
-                  <td style={{padding:"5px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:"#9ca3af",borderLeft:"1px solid #f0f0f0"}}>
-                    {smrContrib==null?"—":`${smrContrib}% / ${100-smrContrib}%`}
-                  </td>
-                </tr>,
-                <tr key={met.key+'-r'}>
-                  <td style={{padding:"5px 8px",fontSize:12,color:"#059669",fontWeight:500}}>Returning</td>
-                  {rvVals.map((v,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:v?"#059669":"#ddd"}}>{v?fmtN(v):"—"}</td>)}
-                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#059669",borderLeft:"1px solid #f0f0f0"}}>{fmtN(smrR)}</td>
+                <tr key={met.key+'-cr'}>
+                  <td style={{padding:"5px 8px",fontSize:12,color:"#059669",fontWeight:500}}>Returning %</td>
+                  {contribVals.map((p,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:p==null?"#ddd":"#059669"}}>{p==null?"—":100-p+"%"}</td>)}
+                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:smrContrib==null?"#ddd":"#059669",borderLeft:"1px solid #f0f0f0"}}>{smrContrib==null?"—":100-smrContrib+"%"}</td>
                 </tr>
               ];
             })}
@@ -387,7 +464,140 @@ function ChannelSection() {
   );
 }
 
+const VERT_METRICS = [
+  {key:"dau",    label:"DAU",         color:"#6366f1", fmt:fmtN,        isRatio:false},
+  {key:"dwl",    label:"DAU w/ Lead", color:"#f59e0b", fmt:fmtN,        isRatio:false},
+  {key:"lead",   label:"Total Lead",  color:"#10b981", fmt:fmtN,        isRatio:false},
+  {key:"mau",    label:"MAU",         color:"#8b5cf6", fmt:fmtN,        isRatio:false},
+  {key:"mauLead",label:"MAU w/ Lead", color:"#ec4899", fmt:fmtN,        isRatio:false},
+  {key:"dauMau", label:"DAU/MAU",     color:"#14b8a6", fmt:n=>n+"%",    isRatio:true},
+];
+
+// ─── BREAKDOWN BY VERTICAL — same metrics as Executive Summary, split PTY/JOB/VEH/GDS ─────────
+function VerticalSection() {
+  const [met, setMet] = useState("dau");
+  const metObj = VERT_METRICS.find(m=>m.key===met);
+
+  const getVal = (v,m) => {
+    const d = VERT_ACT[v]?.[m];
+    if (!d) return null;
+    if (met==="dauMau") return d.mau ? parseFloat((d.dau/d.mau*100).toFixed(1)) : null;
+    return d[met] ?? null;
+  };
+
+  return (
+    <section id="vertical">
+      <div className="section-title">Breakdown by Vertical</div>
+      <div style={{...card,overflowX:"auto"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:2}}>
+          <div style={{fontWeight:700,fontSize:13,color:"#374151"}}>📈 {metObj.label} by Vertical</div>
+          <div style={{display:"flex",gap:4,background:"#f3f4f6",borderRadius:8,padding:3,flexWrap:"wrap"}}>
+            {VERT_METRICS.map(m=>(
+              <button key={m.key} onClick={()=>setMet(m.key)} style={{
+                padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",
+                fontSize:12,fontWeight:600,transition:"all .15s",
+                background:met===m.key?m.color:"transparent",
+                color:met===m.key?"#fff":"#6b7280",
+              }}>{m.label}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{fontSize:11,color:"#9ca3af",marginBottom:8}}>
+          Source: chotot_mtm dashboard__dau_vertical_daily/monthly, dashboard__dauwlead__vertical_daily/monthly,
+          dashboard__mauwlead__vertical_monthly — same authoritative per-vertical actuals as the production
+          dashboard's By Vertical tab (unchanged this round). DAU/MAU is derived (DAU ÷ MAU) per vertical per month.
+        </div>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead>
+            <tr style={{background:"#f8f9ff"}}>
+              <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",textAlign:"left",minWidth:130}}>Vertical</th>
+              {MONTHS.map(m=><th key={m} style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",whiteSpace:"nowrap"}}>{ML[m]}</th>)}
+              <th style={{padding:"5px 8px",fontWeight:600,fontSize:11,background:"#f8f9ff",borderBottom:"2px solid #e5e7eb",color:"#6b7280"}}>Avg/Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {VERTS.map(v=>{
+              const vals = MONTHS.map(m=>getVal(v,m));
+              const nz = vals.filter(x=>x!=null&&x>0).length||1;
+              const numeric = vals.filter(x=>x!=null);
+              const smr = numeric.length
+                ? (metObj.isRatio
+                    ? parseFloat((numeric.reduce((a,x)=>a+x,0)/numeric.length).toFixed(1))
+                    : (met==="lead" ? numeric.reduce((a,x)=>a+x,0) : Math.round(numeric.reduce((a,x)=>a+x,0)/nz)))
+                : null;
+              return (
+                <tr key={v} style={{borderTop:"1px solid #f0f0f0"}}>
+                  <td style={{padding:"5px 8px",fontSize:12,fontWeight:600,color:VERT_COLOR[v],textAlign:"left",whiteSpace:"nowrap"}}>{VERT_LABEL[v]}</td>
+                  {vals.map((val,i)=><td key={i} style={{padding:"5px 8px",fontSize:12,textAlign:"right",color:val!=null?"#111":"#ddd"}}>{val!=null?metObj.fmt(val):"—"}</td>)}
+                  <td style={{padding:"5px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"#374151",borderLeft:"1px solid #f0f0f0"}}>{smr!=null?metObj.fmt(smr):"—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+// ─── SIDEBAR NAV — collapsed icon rail; hover or the ☰ toggle expands it as an overlay ─────────
+function Sidebar({tabs, active, onSelect}) {
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const open = hovered || pinned;
+  return (
+    <div
+      onMouseEnter={()=>setHovered(true)}
+      onMouseLeave={()=>setHovered(false)}
+      style={{
+        position:"fixed", top:64, left:0, bottom:0, width: open?216:56,
+        background:"#1e1b4b", transition:"width .18s ease", zIndex:150,
+        boxShadow: open ? "2px 0 16px rgba(0,0,0,.2)" : "none",
+        overflow:"hidden", display:"flex", flexDirection:"column", paddingTop:10,
+      }}
+    >
+      <button
+        onClick={()=>setPinned(p=>!p)}
+        title={pinned ? "Unpin sidebar" : "Pin sidebar open"}
+        style={{
+          background:"transparent", border:"none", cursor:"pointer", color:"#a5b4fc",
+          padding:"8px 18px", display:"flex", alignItems:"center", gap:14, width:"100%",
+        }}
+      >
+        <span style={{width:20,fontSize:18,textAlign:"center",flexShrink:0}}>☰</span>
+        {open && <span style={{fontSize:11,fontWeight:600,whiteSpace:"nowrap"}}>{pinned?"Unpin menu":"Menu"}</span>}
+      </button>
+      <div style={{height:1,background:"rgba(255,255,255,.1)",margin:"6px 16px 10px"}}/>
+      {tabs.map(t=>(
+        <button
+          key={t.id}
+          onClick={()=>onSelect(t.id)}
+          style={{
+            background: active===t.id ? "rgba(99,102,241,.25)" : "transparent",
+            borderLeft: active===t.id ? "3px solid #818cf8" : "3px solid transparent",
+            border:"none", borderLeftWidth:3, borderLeftStyle:"solid",
+            borderLeftColor: active===t.id ? "#818cf8" : "transparent",
+            cursor:"pointer", color: active===t.id ? "#fff" : "#c7d2fe",
+            fontSize:13, fontWeight: active===t.id ? 700 : 500,
+            padding:"10px 18px", display:"flex", alignItems:"center", gap:14,
+            width:"100%", textAlign:"left", whiteSpace:"nowrap", flexShrink:0,
+          }}
+        >
+          <span style={{width:20,fontSize:16,textAlign:"center",flexShrink:0}}>{t.icon}</span>
+          {open && <span>{t.label}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const TABS = [
+  {id:"exec",     label:"Executive Summary",     icon:"📋"},
+  {id:"vertical", label:"Breakdown by Vertical",  icon:"📈"},
+];
+
 function App() {
+  const [activeTab, setActiveTab] = useState("exec");
   return (
     <div>
       <div style={{position:"sticky",top:0,zIndex:200}}>
@@ -401,7 +611,11 @@ function App() {
           </div>
         </div>
       </div>
-      <ExecSummary/>
+      <Sidebar tabs={TABS} active={activeTab} onSelect={setActiveTab}/>
+      <div style={{paddingLeft:56}}>
+        {activeTab==="exec"     && <ExecSummary/>}
+        {activeTab==="vertical" && <VerticalSection/>}
+      </div>
       <div style={{height:60}}/>
     </div>
   );
