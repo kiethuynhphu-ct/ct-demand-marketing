@@ -37,7 +37,12 @@ const DATA_AS_OF = "2026-07-30";
 const MONTHS = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07"];
 const ML     = {"2026-01":"T1/26", "2026-02":"T2/26", "2026-03":"T3/26", "2026-04":"T4/26", "2026-05":"T5/26", "2026-06":"T6/26", "2026-07":"T7/26*"};
 
-// ─── KPI — unchanged from live dashboard ──────────────────────────────────────
+// ─── KPI — three forecast vintages, all platform-total ("All") scope ──────────
+// Source: "[Confidential] 2026 MKT Plan & Budget" Google Sheet, tab FC2-Demand,
+//   consolidated FC0/FC1/Actual/FC2 table. FC0 = original annual plan (all 12
+//   months). FC1 = post-Q1 revision (Apr-Dec only; Jan-Mar already closed).
+//   FC2 = post-Q2 revision (Jul-Dec only; Jan-Jun already closed). Months with
+//   no forecast for the selected vintage render as "—", not zero.
 const KPI_FC0 = {
   "2026-01":{dau:469506,dwl:54013,lead:5171365},
   "2026-02":{dau:424595,dwl:49044,lead:4490033},
@@ -46,6 +51,15 @@ const KPI_FC0 = {
   "2026-05":{dau:588667,dwl:69573,lead:7033343},
   "2026-06":{dau:620600,dwl:71612,lead:7057700},
   "2026-07":{dau:630175,dwl:72780,lead:7326508},
+};
+const KPI_FC1 = {
+  "2026-04":{dau:486111,dwl:63141,lead:5912040},
+  "2026-05":{dau:498737,dwl:65524,lead:6566963},
+  "2026-06":{dau:539342,dwl:68735,lead:6721820},
+  "2026-07":{dau:554034,dwl:69246,lead:6886439},
+};
+const KPI_FC2 = {
+  "2026-07":{dau:455300,dwl:59277,lead:5912618},
 };
 const KPI_MAU_FC0 = {
   "2026-01":{mau:5859374,mauLead:751867,dauMau:8.0},
@@ -56,8 +70,20 @@ const KPI_MAU_FC0 = {
   "2026-06":{mau:7339727,mauLead:860439,dauMau:8.5},
   "2026-07":{mau:7397438,mauLead:879364,dauMau:8.5},
 };
-const KPI     = KPI_FC0;
-const KPI_MAU = KPI_MAU_FC0;
+const KPI_MAU_FC1 = {
+  "2026-04":{mau:6740920,mauLead:808602,dauMau:7.2},
+  "2026-05":{mau:7030539,mauLead:858833,dauMau:7.1},
+  "2026-06":{mau:7456811,mauLead:885527,dauMau:7.2},
+  "2026-07":{mau:7693170,mauLead:894372,dauMau:7.2},
+};
+const KPI_MAU_FC2 = {
+  "2026-07":{mau:7246081,mauLead:939684,dauMau:6.28},
+};
+const FC_OPTIONS = [
+  {key:"FC0", label:"FC0 (annual plan)",    kpi:KPI_FC0, kpiMau:KPI_MAU_FC0},
+  {key:"FC1", label:"FC1 (post-Q1 revision)",kpi:KPI_FC1, kpiMau:KPI_MAU_FC1},
+  {key:"FC2", label:"FC2 (post-Q2 revision)",kpi:KPI_FC2, kpiMau:KPI_MAU_FC2},
+];
 
 const METRICS = [
   {key:"dau",    label:"DAU",         color:"#6366f1"},
@@ -111,6 +137,11 @@ const TD   = {padding:"7px 12px",textAlign:"right",fontSize:12,color:"#111"};
 
 // ─── EXECUTIVE SUMMARY (only section in this preview) ─────────────────────────
 function ExecSummary() {
+  const [fc, setFc] = useState("FC0");
+  const fcObj = FC_OPTIONS.find(f=>f.key===fc);
+  const KPI_SEL     = fcObj.kpi;
+  const KPI_MAU_SEL = fcObj.kpiMau;
+
   const getPlatUT = (m,key) => UT_CHOTOT[m]?.[key] ?? {nv:0,rv:0};
   const getActVal = (m,key) => {
     if(key==="mau")    return ACT[m]?.mau??0;
@@ -127,27 +158,43 @@ function ExecSummary() {
         <div style={{fontSize:12,color:"#3730a3",lineHeight:1.6}}>
           🔎 <b>Preview branch</b> — DAU / DAU w/ Lead / Total Lead now sourced from{" "}
           <code>ct_digital.mtm_chotot_vertical_dau_mau</code> (vertical=&quot;Chotot&quot;, summed
-          across platform). MAU / MAU w/ Lead / DAU-MAU and all KPI targets are unchanged from the
-          live dashboard.<br/>
+          across platform). MAU / MAU w/ Lead / DAU-MAU are still hardcoded from the live dashboard.<br/>
           ⚠️ Apr/May Total Lead is ~17-18% higher than the currently-live number in this new source
           — every other month agrees within 0.5%. Kept as requested; pending reconciliation with the
-          table owner before this replaces production.
+          table owner before this replaces production.<br/>
+          🆕 <b>FC0 / FC1 / FC2 selector added</b> — sourced from the "2026 MKT Plan &amp; Budget"
+          sheet's consolidated FC0/FC1/Actual/FC2 table (platform-total scope, confirmed matching).
+          FC1 only covers Apr-Dec, FC2 only covers Jul-Dec — earlier months show "—" for those
+          vintages rather than a misleading number.
         </div>
       </div>
 
       {/* KPI vs Actual table */}
       <div style={{...card,overflowX:"auto",marginBottom:20}}>
-        <div style={{fontWeight:600,fontSize:13,marginBottom:12,color:"#374151"}}>
-          🎯 KPI vs Actual — Toàn Platform
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:12}}>
+          <div style={{fontWeight:600,fontSize:13,color:"#374151"}}>
+            🎯 {fcObj.label.split(" (")[0]} vs Actual — Toàn Platform
+          </div>
+          <div style={{display:"flex",gap:4,background:"#f3f4f6",borderRadius:8,padding:3}}>
+            {FC_OPTIONS.map(o=>(
+              <button key={o.key} onClick={()=>setFc(o.key)} title={o.label} style={{
+                padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",
+                fontSize:12,fontWeight:600,transition:"all .15s",
+                background:fc===o.key?"#6366f1":"transparent",
+                color:fc===o.key?"#fff":"#6b7280",
+              }}>{o.key}</button>
+            ))}
+          </div>
         </div>
+        <div style={{fontSize:11,color:"#9ca3af",marginBottom:10}}>{fcObj.label} — months outside its forecast window show "—".</div>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
           <thead>
             <tr style={{background:"#f8f9ff"}}>
               <th style={TH}>Metric</th>
               {MONTHS.map(m=>(
                 <th key={m} colSpan={3} style={{...TH,textAlign:"center",
-                  borderLeft:"2px solid #e5e7eb",color:"#6366f1"}}>
-                  {ML[m]} (FC)
+                  borderLeft:"2px solid #e5e7eb",color:KPI_SEL[m]?"#6366f1":"#d1d5db"}}>
+                  {ML[m]} ({fc})
                 </th>
               ))}
             </tr>
@@ -156,8 +203,8 @@ function ExecSummary() {
               {MONTHS.map(m=>(
                 <React.Fragment key={m}>
                   <th style={{...TH,borderLeft:"2px solid #e5e7eb",color:"#374151"}}>Actual</th>
-                  <th style={{...TH,color:"#6b7280"}}>KPI</th>
-                  <th style={{...TH,color:"#9ca3af"}}>vs KPI</th>
+                  <th style={{...TH,color:"#6b7280"}}>{fc}</th>
+                  <th style={{...TH,color:"#9ca3af"}}>vs {fc}</th>
                 </React.Fragment>
               ))}
             </tr>
@@ -167,13 +214,14 @@ function ExecSummary() {
               <tr key={met.key} style={{borderTop:"1px solid #f0f0f0"}}>
                 <td style={{...TD,fontWeight:600,color:met.color,whiteSpace:"nowrap"}}>{met.label}</td>
                 {MONTHS.map(m=>{
-                  const act=ACT[m][met.key], k=KPI[m][met.key];
-                  const p=pct(act,k), pC=p>=100?"#059669":p>=85?"#d97706":"#dc2626";
+                  const act=ACT[m][met.key], k=KPI_SEL[m]?.[met.key];
+                  const hasK = k!=null;
+                  const p=hasK?pct(act,k):null, pC=p>=100?"#059669":p>=85?"#d97706":"#dc2626";
                   return (
                     <React.Fragment key={m}>
                       <td style={{...TD,borderLeft:"2px solid #f0f0f0",fontWeight:600}}>{fmtN(act)}</td>
-                      <td style={{...TD,color:"#9ca3af"}}>{fmtN(k)}</td>
-                      <td style={{...TD}}><span style={{color:pC,fontWeight:700,fontSize:12,background:pC+"18",padding:"2px 8px",borderRadius:99}}>{p}%</span></td>
+                      <td style={{...TD,color:"#9ca3af"}}>{hasK?fmtN(k):"—"}</td>
+                      <td style={{...TD}}>{hasK?<span style={{color:pC,fontWeight:700,fontSize:12,background:pC+"18",padding:"2px 8px",borderRadius:99}}>{p}%</span>:<span style={{color:"#d1d5db"}}>—</span>}</td>
                     </React.Fragment>
                   );
                 })}
@@ -181,21 +229,22 @@ function ExecSummary() {
             ))}
             <tr><td colSpan={1+MONTHS.length*3} style={{padding:"4px 12px",background:"#f8f9ff",fontSize:11,color:"#9ca3af",borderTop:"2px solid #e5e7eb"}}>MAU Metrics</td></tr>
             {[
-              {label:"MAU",     color:"#8b5cf6",getAct:m=>ACT[m].mau,    getTgt:m=>KPI_MAU[m].mau,    fmt:fmtN,     isRatio:false},
-              {label:"MAU w/ Lead",color:"#ec4899",getAct:m=>ACT[m].mauLead,getTgt:m=>KPI_MAU[m].mauLead,fmt:fmtN, isRatio:false},
-              {label:"DAU/MAU", color:"#14b8a6",getAct:m=>ACT[m].dauMau, getTgt:m=>KPI_MAU[m].dauMau, fmt:n=>n+"%", isRatio:true},
+              {label:"MAU",     color:"#8b5cf6",getAct:m=>ACT[m].mau,    getTgt:m=>KPI_MAU_SEL[m]?.mau,    fmt:fmtN,     isRatio:false},
+              {label:"MAU w/ Lead",color:"#ec4899",getAct:m=>ACT[m].mauLead,getTgt:m=>KPI_MAU_SEL[m]?.mauLead,fmt:fmtN, isRatio:false},
+              {label:"DAU/MAU", color:"#14b8a6",getAct:m=>ACT[m].dauMau, getTgt:m=>KPI_MAU_SEL[m]?.dauMau, fmt:n=>n+"%", isRatio:true},
             ].map(({label,color,getAct,getTgt,fmt,isRatio})=>(
               <tr key={label} style={{borderTop:"1px solid #f0f0f0"}}>
                 <td style={{...TD,fontWeight:600,color,whiteSpace:"nowrap"}}>{label}</td>
                 {MONTHS.map(m=>{
                   const act=getAct(m), k=getTgt(m);
-                  const p=isRatio?(act&&k?Math.round(act/k*100):null):pct(act,k);
+                  const hasK = k!=null;
+                  const p=!hasK?null:(isRatio?(act&&k?Math.round(act/k*100):null):pct(act,k));
                   const pC=p>=100?"#059669":p>=85?"#d97706":"#dc2626";
                   return (
                     <React.Fragment key={m}>
                       <td style={{...TD,borderLeft:"2px solid #f0f0f0",fontWeight:600}}>{fmt(act)}</td>
-                      <td style={{...TD,color:"#9ca3af"}}>{fmt(k)}</td>
-                      <td style={{...TD}}><span style={{color:pC,fontWeight:700,fontSize:12,background:pC+"18",padding:"2px 8px",borderRadius:99}}>{p}%</span></td>
+                      <td style={{...TD,color:"#9ca3af"}}>{hasK?fmt(k):"—"}</td>
+                      <td style={{...TD}}>{hasK?<span style={{color:pC,fontWeight:700,fontSize:12,background:pC+"18",padding:"2px 8px",borderRadius:99}}>{p}%</span>:<span style={{color:"#d1d5db"}}>—</span>}</td>
                     </React.Fragment>
                   );
                 })}
