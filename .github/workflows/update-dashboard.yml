@@ -36,3 +36,4 @@ jobs:
             git commit -m "data: auto-update $(date -u '+%Y-%m-%d') [skip ci]"
             git push
           )
+# re-save to trigger GitHub Actions workflow discovery (2026-08-04T15:17:30Z)
