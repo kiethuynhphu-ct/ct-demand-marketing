@@ -8,9 +8,14 @@
   PREVIEW BRANCH: exec-summary-mtm-source
   Not run through build.js (no Node available when this was authored) — uses in-browser Babel.
   Run `node build.js` before this is ever merged/deployed to production.
-  Scope: Executive Summary section only. DAU/DWL/Total Lead now sourced from
-  chotot-dwh.ct_digital.mtm_chotot_vertical_dau_mau (vertical='Chotot', summed across platform).
-  MAU / MAU w/Lead / DAU-MAU untouched — still the previous hardcoded values. KPI untouched.
+  Scope: Executive Summary + Breakdown by Vertical tabs. Platform-total DAU/DWL/Total Lead
+  (ACT) sourced from chotot-dwh.ct_digital.mtm_chotot_vertical_dau_mau (vertical='Chotot',
+  summed across platform). Per-vertical DAU/DWL/Lead/MAU/MAU w/Lead (VERT_ACT, 2026-08-04)
+  now sourced from the same table, vertical IN (pty/jobs/veh/gds) — see the VEH/O-014 caveat
+  next to VERT_ACT. Channel breakdown (CHANNEL_DATA/VERT_CHANNEL) sourced from
+  ct_digital.mtm_chotot_vertical_channel. MAU / MAU w/Lead / DAU-MAU on the platform-total ACT
+  row are still the previous hardcoded values (out of scope). KPI/FC0-FC1-FC2 sourced from the
+  "2026 MKT Plan & Budget" sheet, tab FC2-Demand.
 -->
 <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
@@ -142,49 +147,59 @@ const CHANNEL_DATA = {
   Others:  {"2026-01":{dau:14634, dwl:2437, lead:245010 },"2026-02":{dau:21351, dwl:3566, lead:309258 },"2026-03":{dau:32854, dwl:6230, lead:691859 },"2026-04":{dau:57391, dwl:5084, lead:578659 },"2026-05":{dau:65340, dwl:5364, lead:589066 },"2026-06":{dau:78981, dwl:5240, lead:505967 },"2026-07":{dau:98055, dwl:7873, lead:626308 }},
 };
 
-// Per-vertical actuals — same authoritative chotot_mtm tables as production's VERT_ACT
-// (dashboard__dau_vertical_daily/monthly, dashboard__dauwlead__vertical_daily/monthly,
-// dashboard__mauwlead__vertical_monthly), copied over unchanged for the new "Breakdown by
-// Vertical" tab. dauMau is derived on read (dau/mau), not stored, same as production.
+// Per-vertical actuals — NEW SOURCE (2026-08-04): chotot-dwh.ct_digital.mtm_chotot_vertical_dau_mau,
+// vertical IN ('pty','jobs','veh','gds'), summed across platform (Android/Desktop/MSite/iOS).
+// dau/dwl: SUM across platform per day, then AVG over the month. lead: SUM across platform per
+// day, then SUM over the month (event count, not a snapshot). mau/mauLead: these two fields are
+// CONSTANT per (vertical, platform, month) in the source, not daily — take one value per platform
+// (ANY_VALUE) then SUM across platform. dauMau is derived on read (dau/mau), not stored.
+// Replaces the previous chotot_mtm.dashboard__* per-vertical tables. PTY/JOB/GDS agree with the
+// old source within ~1-2%.
+// ⚠️ VEH is NOT reconciled (O-014): VEH Total Lead is +93% in Apr (1,481,312 vs the old 766,108)
+// and +71% in May (1,228,473 vs 719,097) — every other month/vertical agrees within ~2%. The four
+// verticals' new-source sum matches the platform-total Chotot channel figure, so the new source is
+// internally consistent; the old chotot_mtm VEH number looks like the outlier, but this is NOT
+// confirmed by the table owner (thanh_nguyenchi). Treat VEH Lead figures below with that caveat
+// until reconciled.
 const VERTS = ["PTY","JOB","VEH","GDS"];
 const VERT_LABEL = {PTY:"Nhà đất (PTY)", JOB:"Việc làm (JOB)", VEH:"Xe cộ (VEH)", GDS:"Đồ dùng (GDS)"};
 const VERT_COLOR = {PTY:"#0ea5e9", JOB:"#f97316", VEH:"#a855f7", GDS:"#22c55e"};
 const VERT_ACT = {
   PTY:{
-    "2026-01":{dau:65530,dwl:8657,lead:1123564,mau:1069022,mauLead:153546},
-    "2026-02":{dau:51891,dwl:6355,lead:685554,mau:828572,mauLead:113986},
-    "2026-03":{dau:90032,dwl:12842,lead:1585808,mau:1483675,mauLead:225193},
-    "2026-04":{dau:82776,dwl:10731,lead:1251398,mau:1347596,mauLead:178248},
-    "2026-05":{dau:83965,dwl:10749,lead:1310424,mau:1440429,mauLead:186795},
-    "2026-06":{dau:81636,dwl:10114,lead:1184802,mau:1398901,mauLead:175540},
-    "2026-07":{dau:88742,dwl:11595,lead:1202793,mau:1645547,mauLead:228248},
+    "2026-01":{dau:65527,dwl:8684,lead:1094238,mau:1069161,mauLead:154383},
+    "2026-02":{dau:51892,dwl:6381,lead:675835,mau:828678,mauLead:114740},
+    "2026-03":{dau:90032,dwl:12912,lead:1567193,mau:1483848,mauLead:227489},
+    "2026-04":{dau:82778,dwl:10819,lead:1319098,mau:1347797,mauLead:179997},
+    "2026-05":{dau:84074,dwl:10789,lead:1362403,mau:1440604,mauLead:187267},
+    "2026-06":{dau:81677,dwl:10116,lead:1175629,mau:1399071,mauLead:175560},
+    "2026-07":{dau:88744,dwl:11597,lead:1186396,mau:1645884,mauLead:226820},
   },
   JOB:{
-    "2026-01":{dau:33065,dwl:5905,lead:647339,mau:513192,mauLead:95501},
-    "2026-02":{dau:32642,dwl:5333,lead:494817,mau:512045,mauLead:87919},
-    "2026-03":{dau:60329,dwl:10731,lead:1151840,mau:968833,mauLead:172371},
-    "2026-04":{dau:47009,dwl:8448,lead:835156,mau:721012,mauLead:130914},
-    "2026-05":{dau:45551,dwl:8705,lead:901132,mau:691607,mauLead:136321},
-    "2026-06":{dau:43852,dwl:9038,lead:983147,mau:644625,mauLead:138627},
-    "2026-07":{dau:42330,dwl:8811,lead:1039824,mau:645042,mauLead:138519},
+    "2026-01":{dau:33066,dwl:5930,lead:642530,mau:513328,mauLead:96315},
+    "2026-02":{dau:32643,dwl:5365,lead:490489,mau:512116,mauLead:88906},
+    "2026-03":{dau:60330,dwl:10804,lead:1140911,mau:968997,mauLead:174788},
+    "2026-04":{dau:47009,dwl:8498,lead:848380,mau:721114,mauLead:132164},
+    "2026-05":{dau:45625,dwl:8731,lead:913660,mau:691727,mauLead:136787},
+    "2026-06":{dau:43886,dwl:9096,lead:976618,mau:644719,mauLead:140371},
+    "2026-07":{dau:42329,dwl:8833,lead:1035451,mau:645114,mauLead:139209},
   },
   VEH:{
-    "2026-01":{dau:117316,dwl:8301,lead:752526,mau:2014777,mauLead:128135},
-    "2026-02":{dau:90244,dwl:6663,lead:520778,mau:1258771,mauLead:105548},
-    "2026-03":{dau:124311,dwl:9592,lead:1272050,mau:1965956,mauLead:152763},
-    "2026-04":{dau:104666,dwl:8562,lead:766108,mau:1488175,mauLead:131726},
-    "2026-05":{dau:98055,dwl:7988,lead:719097,mau:1434016,mauLead:129054},
-    "2026-06":{dau:92461,dwl:7593,lead:761553,mau:1329234,mauLead:120096},
-    "2026-07":{dau:98832,dwl:7993,lead:665769,mau:1516253,mauLead:131784},
+    "2026-01":{dau:117312,dwl:8311,lead:745192,mau:2014856,mauLead:128062},
+    "2026-02":{dau:90244,dwl:6675,lead:515534,mau:1258818,mauLead:105584},
+    "2026-03":{dau:124311,dwl:9611,lead:1261272,mau:1966081,mauLead:152946},
+    "2026-04":{dau:104665,dwl:8626,lead:1481312,mau:1488251,mauLead:132172},
+    "2026-05":{dau:98201,dwl:8031,lead:1228473,mau:1434068,mauLead:129071},
+    "2026-06":{dau:92505,dwl:7594,lead:756122,mau:1329258,mauLead:119898},
+    "2026-07":{dau:98829,dwl:7993,lead:660729,mau:1516299,mauLead:131563},
   },
   GDS:{
-    "2026-01":{dau:167681,dwl:23570,lead:1863098,mau:1976446,mauLead:291961},
-    "2026-02":{dau:148969,dwl:21019,lead:1521171,mau:1637244,mauLead:261839},
-    "2026-03":{dau:176466,dwl:25851,lead:2098911,mau:2094334,mauLead:327917},
-    "2026-04":{dau:166535,dwl:25197,lead:1905897,mau:1834010,mauLead:310566},
-    "2026-05":{dau:163019,dwl:24041,lead:1883213,mau:1893232,mauLead:310689},
-    "2026-06":{dau:182598,dwl:23339,lead:1840489,mau:2455584,mauLead:302379},
-    "2026-07":{dau:172852,dwl:24454,lead:1976231,mau:2165463,mauLead:330256},
+    "2026-01":{dau:167675,dwl:23580,lead:1820613,mau:1976567,mauLead:291248},
+    "2026-02":{dau:148966,dwl:21035,lead:1482478,mau:1637292,mauLead:261342},
+    "2026-03":{dau:176462,dwl:25875,lead:2037597,mau:2094456,mauLead:327373},
+    "2026-04":{dau:166532,dwl:25243,lead:1903577,mau:1834081,mauLead:310034},
+    "2026-05":{dau:163279,dwl:24072,lead:1884884,mau:1893330,mauLead:309729},
+    "2026-06":{dau:182690,dwl:23341,lead:1806787,mau:2455693,mauLead:301158},
+    "2026-07":{dau:172845,dwl:24456,lead:1950348,mau:2165600,mauLead:329069},
   },
 };
 
@@ -576,10 +591,13 @@ function VerticalSection() {
           </div>
         </div>
         <div style={{fontSize:11,color:"#9ca3af",marginBottom:8}}>
-          Source: chotot_mtm dashboard__dau_vertical_daily/monthly, dashboard__dauwlead__vertical_daily/monthly,
-          dashboard__mauwlead__vertical_monthly — same authoritative per-vertical actuals as the production
-          dashboard's By Vertical tab (unchanged this round). DAU/MAU is derived (DAU ÷ MAU) per vertical per month.
-          {view==="channel" && <span>{" "}Channel split: ct_digital.mtm_chotot_vertical_channel (vertical=pty/jobs/veh/gds), summed across platform, growth_inapp+growth_outapp folded into Growth. MAU / MAU w/ Lead / DAU-MAU are not available at channel grain and are disabled in this view. The channel rows come from a different table than the vertical total row, so they do not tie out exactly: DAU and DAU w/ Lead channel sums run ~1–5% above the vertical total (channels overlap — one user active via 2+ channels counts in each — plus the source difference), and Total Lead differs by roughly −7%…+5%. Exception to flag: VEH T4/26 and T5/26 Total Lead sums to 1.48M / 1.23M here versus 766K / 719K in the vertical total row — the same unreconciled Apr/May lead discrepancy already noted for the platform actuals; not yet resolved with the table owners.</span>}
+          Source: chotot-dwh.ct_digital.mtm_chotot_vertical_dau_mau (switched 2026-08-04, replaces the
+          previous chotot_mtm.dashboard__* per-vertical tables). DAU/MAU is derived (DAU ÷ MAU) per vertical
+          per month. ⚠️ VEH Total Lead in Apr/May (1.48M / 1.23M) is NOT reconciled against the figure the
+          old source used to show (766K / 719K) — every other vertical/month agrees within ~2%. Kept as the
+          new source per team decision; flagged for reconciliation with the table owner (thanh_nguyenchi)
+          before being treated as final.
+          {view==="channel" && <span>{" "}Channel split: ct_digital.mtm_chotot_vertical_channel (vertical=pty/jobs/veh/gds), summed across platform, growth_inapp+growth_outapp folded into Growth. MAU / MAU w/ Lead / DAU-MAU are not available at channel grain and are disabled in this view. Channel-view sums now broadly agree with the Total row above (both come from the ct_digital table family): DAU and DAU w/ Lead channel sums run ~1–5% above the vertical total (channels overlap — one user active via 2+ channels counts in each), and Total Lead differs by roughly −7%…+5% — normal overcounting, not a source mismatch.</span>}
         </div>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
           <thead>
